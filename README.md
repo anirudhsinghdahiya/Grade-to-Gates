@@ -24,10 +24,11 @@ To run the R Markdown file and reproduce the analysis:
 ```bash
 git clone https://github.com/anirudhsinghdahiya/GradeToGates.git
 ```
-#Contributing
+
+## Contributing
 
 Contributions to the analysis or methodology are welcome. Please feel free to fork the repository, make your changes, and submit a pull request.
 
-#License
+## License
 
-This project is open source and available under standard MIT License terms.
+This project is open source and available under the MIT License.
