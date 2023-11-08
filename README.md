@@ -17,7 +17,7 @@ This analysis uses the R programming language, along with the `tidyverse` and `l
 To run the R Markdown file and reproduce the analysis:
 
 1. Clone the repository.
-2. Open the `final_project2.Rmd` file in RStudio.
+2. Open the `GradeToGates.Rmd` file in RStudio.
 3. Install the required R packages if you haven't already.
 4. Run the R Markdown file to generate the HTML report.
 
