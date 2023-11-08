@@ -1,0 +1,188 @@
+---
+title: "GradeToGates"
+author: "Anirudh Dahiya"
+date: "2022-11-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning = FALSE,
+                      error = TRUE, fig.height = 4)
+library(tidyverse)
+library(lubridate)
+library(broman)
+source("../../scripts/viridis.R")
+source("../../scripts/ggprob.R")
+```
+
+
+```{r}
+freshmen_survey = read_csv("C:/Users/aniru/OneDrive/Documents/Stat 240/Data/freshmen-survey_csv.csv")
+
+```
+
+
+```{r}
+freshmen = freshmen_survey %>%
+  rename("all_institutions" = "All Bacc Institutions", "public_unis" = "Public Universities", "private_unis" = "Private Universities", "public_colleges" = "Public 4-year Colleges", "private_colleges" = "Private 4-year Colleges") %>% 
+  mutate(public = public_unis + public_colleges, private = private_unis + private_colleges) %>% 
+  select(Survey, all_institutions, public, private) %>% 
+  filter(Survey %in% c("A or A+","A-","B+", "B","B-","C+", "C","D")) %>% 
+  rename("average_hs_grade" = Survey) %>% 
+  mutate(public = public /2, private = private/2) 
+
+freshmen
+
+```
+
+```{r}
+experiment1 = freshmen %>% 
+  mutate(grade = case_when(average_hs_grade == "A or A+" ~ "A", average_hs_grade == "A-" ~ "A", average_hs_grade == "B+" ~ "B or below", average_hs_grade == "B" ~ "B or below", average_hs_grade == "B-" ~ "B or below", average_hs_grade == "C+" ~ "B or below", average_hs_grade == "C" ~ "B or below", average_hs_grade == "D" ~ "B or below")) %>% 
+  filter(grade == "A" | grade == "B or below") %>% 
+  group_by(grade) %>% 
+  summarize(public_p = sum(public)/100, private_p = sum(private)/100)
+
+experiment1
+
+```
+
+```{r}
+experiment2 = experiment1 %>% 
+  filter(grade == "A")
+
+experiment2
+
+```
+
+
+
+$$
+X_{\text{private}} \mid p \sim \text{Binomial}(81092, p_{\text{private}})  \\
+X_{\text{public}} \mid p \sim \text{Binomial}(71923, p_{\text{public}})
+
+$$
+
+$$
+H_0: p_{\text{private}} - p_{\text{public}} = 0 \\
+H_a: p_{\text{private}} - p_{\text{public}} \neq 0
+$$
+
+
+```{r}
+## difference of proportions test proportion of public with A and proportion of private with A 
+
+## null: p_private - p_public = 0 
+## alternate: p_private - p_public  != 0
+
+
+## point estimate 
+pe1 = experiment1 %>% 
+  filter(grade == "A") %>% 
+  mutate(diff = private_p - public_p) %>% 
+  pull(diff)
+pe1
+
+
+n_private = freshmen_survey %>% 
+  filter(Survey == "First-time Full-time Freshmen") %>% 
+ rename("all_institutions" = "All Bacc Institutions", "public_unis" = "Public Universities", "private_unis" = "Private Universities", "public_colleges" = "Public 4-year Colleges", "private_colleges" = "Private 4-year Colleges") %>% 
+  mutate(public = public_unis + public_colleges, private = private_unis + private_colleges) %>% 
+  pull(private)
+
+n_public = freshmen_survey %>% 
+  filter(Survey == "First-time Full-time Freshmen") %>% 
+  rename("all_institutions" = "All Bacc Institutions", "public_unis" = "Public Universities", "private_unis" = "Private Universities", "public_colleges" = "Public 4-year Colleges", "private_colleges" = "Private 4-year Colleges") %>% 
+  mutate(public = public_unis + public_colleges, private = private_unis + private_colleges) %>% 
+  pull(public)
+
+## se estimate 
+
+p_private = experiment1 %>% 
+  filter(grade == "A") %>% 
+  pull(private_p)
+
+p_public = experiment1 %>% 
+  filter(grade == "A") %>% 
+  pull(public_p)
+
+
+se_private = sqrt((p_private*(1 - p_private))/n_private)
+se_public = sqrt((p_public*(1 - p_public))/n_public)
+se_private
+se_public
+
+se1 = sqrt(se_private^2 + se_public^2)
+se1
+
+
+### test statistic calculation 
+
+ts1 = pe1  / se1
+ts1
+
+
+gnorm() + geom_vline(xintercept = ts1)
+
+p_value1 = (1 - pnorm(ts1)) * 2
+p_value1
+
+``` 
+
+
+
+$$ 
+X_{\text{public}} \mid p \sim \text{Binomial}(71923, p_{\text{public}}) \\
+
+H_0: p_{\text{public}} = 0.5 \\
+H_a: p_{\text{public}} \neq 0.5
+$$
+
+
+
+```{r}
+### test to see if public_p for A is equal to 0.5
+
+pe3 = experiment2 %>% 
+  pull(public_p)
+pe3 
+
+se3 = sqrt(pe3*(1-pe3)/n_public)
+se3 
+
+ts3 = (pe3 - 0.5)/se3
+ts3
+
+gnorm() + geom_vline(xintercept = ts3)
+
+pvalue3 = pnorm(ts3) * 2
+pvalue3
+
+```
+
+
+
+$$ 
+X_{\text{private}} \mid p \sim \text{Binomial}(81092, p_{\text{private}}) \\
+
+H_0: p_{\text{private}} = 0.5 \\
+H_a: p_{\text{private}} \neq 0.5
+$$
+
+```{r}
+### test to see if private_p for A is equal to 0.5
+pe4 = experiment2 %>% 
+  pull(private_p)
+pe4 
+
+se4 = sqrt(pe4*(1-pe4)/n_private)
+se4 
+
+ts4 = (pe4 - 0.5)/se4
+ts4
+
+gnorm() + geom_vline(xintercept = ts4)
+
+pvalue4 = (1 - pnorm(ts4)) * 2
+pvalue4
+
+```
